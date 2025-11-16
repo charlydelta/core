@@ -1,9 +1,9 @@
 {
   "domain": "learning",
   "name": "Learning Sensor",
-  "codeowners": ["@charlydelta"],
+  "codeowners": ["@rhidus", "@charlydelta"],
   "config_flow": true,
-  "dependencies": [],
+  "dependencies": ["sklearn"],
   "documentation": "https://www.home-assistant.io/integrations/learning",
   "homekit": {},
   "integration_type": "helper",
