@@ -49,20 +49,19 @@ from homeassistant.helpers.template import Template, result_as_boolean
 from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
 
 from .const import (
+    ATTR_CLASSIFICATION_SCORE,
+    ATTR_CLASSIFICATION_SCORE_THRESHOLD,
     ATTR_OBSERVATIONS,
     ATTR_OCCURRED_OBSERVATION_ENTITIES,
-    ATTR_PROBABILITY,
-    ATTR_PROBABILITY_THRESHOLD,
+    CONF_CLASSIFICATION_SCORE_THRESHOLD,
     CONF_NUMERIC_STATE,
     CONF_OBSERVATIONS,
     CONF_P_GIVEN_F,
     CONF_P_GIVEN_T,
-    CONF_PRIOR,
-    CONF_PROBABILITY_THRESHOLD,
     CONF_TEMPLATE,
     CONF_TO_STATE,
+    DEFAULT_CLASSIFICATION_SCORE_THRESHOLD,
     DEFAULT_NAME,
-    DEFAULT_PROBABILITY_THRESHOLD,
     DOMAIN,
     PLATFORMS,
 )
@@ -190,9 +189,9 @@ PLATFORM_SCHEMA = BINARY_SENSOR_PLATFORM_SCHEMA.extend(
                 no_overlapping,
             )
         ),
-        vol.Required(CONF_PRIOR): vol.Coerce(float),
         vol.Optional(
-            CONF_PROBABILITY_THRESHOLD, default=DEFAULT_PROBABILITY_THRESHOLD
+            CONF_CLASSIFICATION_SCORE_THRESHOLD,
+            default=DEFAULT_CLASSIFICATION_SCORE_THRESHOLD,
         ): vol.Coerce(float),
     }
 )
@@ -223,8 +222,7 @@ async def async_setup_platform(
     name: str = config[CONF_NAME]
     unique_id: str | None = config.get(CONF_UNIQUE_ID)
     observations: list[ConfigType] = config[CONF_OBSERVATIONS]
-    prior: float = config[CONF_PRIOR]
-    probability_threshold: float = config[CONF_PROBABILITY_THRESHOLD]
+    probability_threshold: float = config[CONF_CLASSIFICATION_SCORE_THRESHOLD]
     device_class: BinarySensorDeviceClass | None = config.get(CONF_DEVICE_CLASS)
 
     # Should deprecate in some future version (2022.10 at time of writing) & make prob_given_false required in schemas.
@@ -245,7 +243,6 @@ async def async_setup_platform(
             LearningBinarySensor(
                 name,
                 unique_id,
-                prior,
                 observations,
                 probability_threshold,
                 device_class,
@@ -278,8 +275,7 @@ async def async_setup_entry(
                 observation[CONF_VALUE_TEMPLATE], hass
             )
 
-    prior: float = config[CONF_PRIOR]
-    probability_threshold: float = config[CONF_PROBABILITY_THRESHOLD]
+    probability_threshold: float = config[CONF_CLASSIFICATION_SCORE_THRESHOLD]
     device_class: BinarySensorDeviceClass | None = config.get(CONF_DEVICE_CLASS)
 
     async_add_entities(
@@ -287,7 +283,6 @@ async def async_setup_entry(
             LearningBinarySensor(
                 name,
                 unique_id,
-                prior,
                 observations,
                 probability_threshold,
                 device_class,
@@ -305,9 +300,8 @@ class LearningBinarySensor(BinarySensorEntity):
         self,
         name: str,
         unique_id: str | None,
-        prior: float,
         observations: list[ConfigType],
-        probability_threshold: float,
+        classification_score_threshold: float,
         device_class: BinarySensorDeviceClass | None,
     ) -> None:
         """Initialize the learning sensor."""
@@ -328,13 +322,12 @@ class LearningBinarySensor(BinarySensorEntity):
             )
             for observation in observations
         ]
-        self._probability_threshold = probability_threshold
+        self._classification_score_threshold = classification_score_threshold
         self._attr_device_class = device_class
         self._attr_is_on = False
         self._callbacks: list[TrackTemplateResultInfo] = []
 
-        self.prior = prior
-        self.probability = prior
+        self.classification_score = self._classification_score_threshold
 
         self.current_observations: OrderedDict[UUID, Observation] = OrderedDict({})
 
@@ -434,8 +427,10 @@ class LearningBinarySensor(BinarySensorEntity):
             info.async_refresh()
 
         self.current_observations.update(self._initialize_current_observations())
-        self.probability = self._calculate_new_probability()
-        self._attr_is_on = self.probability >= self._probability_threshold
+        self.classification_score = self._calculate_new_probability()
+        self._attr_is_on = (
+            self.classification_score >= self._classification_score_threshold
+        )
 
         # detect mirrored entries
         for entity, observations in self.observations_by_entity.items():
@@ -455,8 +450,10 @@ class LearningBinarySensor(BinarySensorEntity):
 
     @callback
     def _recalculate_and_write_state(self) -> None:
-        self.probability = self._calculate_new_probability()
-        self._attr_is_on = bool(self.probability >= self._probability_threshold)
+        self.classification_score = self._calculate_new_probability()
+        self._attr_is_on = bool(
+            self.classification_score >= self._classification_score_threshold
+        )
         self.async_write_ha_state()
 
     def _initialize_current_observations(self) -> OrderedDict[UUID, Observation]:
@@ -481,7 +478,7 @@ class LearningBinarySensor(BinarySensorEntity):
         return local_observations
 
     def _calculate_new_probability(self) -> float:
-        prior = self.prior
+        prior = 0.5
 
         for observation in self.current_observations.values():
             if observation.observed is True:
@@ -634,8 +631,8 @@ class LearningBinarySensor(BinarySensorEntity):
         """Return the state attributes of the sensor."""
 
         return {
-            ATTR_PROBABILITY: round(self.probability, 2),
-            ATTR_PROBABILITY_THRESHOLD: self._probability_threshold,
+            ATTR_CLASSIFICATION_SCORE: round(self.classification_score, 2),
+            ATTR_CLASSIFICATION_SCORE_THRESHOLD: self._classification_score_threshold,
             # An entity can be in more than one observation so set then list to deduplicate
             ATTR_OCCURRED_OBSERVATION_ENTITIES: list(
                 {

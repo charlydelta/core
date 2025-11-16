@@ -6,17 +6,16 @@ DOMAIN = "learning"
 PLATFORMS = [Platform.BINARY_SENSOR]
 ATTR_OBSERVATIONS = "observations"
 ATTR_OCCURRED_OBSERVATION_ENTITIES = "occurred_observation_entities"
-ATTR_PROBABILITY = "probability"
-ATTR_PROBABILITY_THRESHOLD = "probability_threshold"
+ATTR_CLASSIFICATION_SCORE = "classification_score"
+ATTR_CLASSIFICATION_SCORE_THRESHOLD = "classification_score_threshold"
 
 CONF_OBSERVATIONS = "observations"
-CONF_PRIOR = "prior"
 CONF_TEMPLATE = "template"
 CONF_NUMERIC_STATE = "numeric_state"
-CONF_PROBABILITY_THRESHOLD = "probability_threshold"
+CONF_CLASSIFICATION_SCORE_THRESHOLD = "classification_score_threshold"
 CONF_P_GIVEN_F = "prob_given_false"
 CONF_P_GIVEN_T = "prob_given_true"
 CONF_TO_STATE = "to_state"
 
 DEFAULT_NAME = "Learning Binary Sensor"
-DEFAULT_PROBABILITY_THRESHOLD = 0.5
+DEFAULT_CLASSIFICATION_SCORE_THRESHOLD = 0.5

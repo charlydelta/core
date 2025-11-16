@@ -62,15 +62,14 @@ from homeassistant.helpers.schema_config_entry_flow import (
 
 from .binary_sensor import above_greater_than_below, no_overlapping
 from .const import (
+    CONF_CLASSIFICATION_SCORE_THRESHOLD,
     CONF_OBSERVATIONS,
     CONF_P_GIVEN_F,
     CONF_P_GIVEN_T,
-    CONF_PRIOR,
-    CONF_PROBABILITY_THRESHOLD,
     CONF_TEMPLATE,
     CONF_TO_STATE,
+    DEFAULT_CLASSIFICATION_SCORE_THRESHOLD,
     DEFAULT_NAME,
-    DEFAULT_PROBABILITY_THRESHOLD,
     DOMAIN,
 )
 
@@ -128,7 +127,8 @@ class OptionsFlowSteps(StrEnum):
 OPTIONS_SCHEMA = vol.Schema(
     {
         vol.Required(
-            CONF_PROBABILITY_THRESHOLD, default=DEFAULT_PROBABILITY_THRESHOLD * 100
+            CONF_CLASSIFICATION_SCORE_THRESHOLD,
+            default=DEFAULT_CLASSIFICATION_SCORE_THRESHOLD * 100,
         ): vol.All(
             selector.NumberSelector(
                 selector.NumberSelectorConfig(
@@ -145,24 +145,6 @@ OPTIONS_SCHEMA = vol.Schema(
                 min_included=False,
                 max_included=False,
                 msg="extreme_threshold_error",
-            ),
-        ),
-        vol.Required(CONF_PRIOR, default=DEFAULT_PROBABILITY_THRESHOLD * 100): vol.All(
-            selector.NumberSelector(
-                selector.NumberSelectorConfig(
-                    mode=selector.NumberSelectorMode.SLIDER,
-                    step=1.0,
-                    min=0,
-                    max=100,
-                    unit_of_measurement="%",
-                ),
-            ),
-            vol.Range(
-                min=0,
-                max=100,
-                min_included=False,
-                max_included=False,
-                msg="extreme_prior_error",
             ),
         ),
         vol.Optional(CONF_DEVICE_CLASS): selector.SelectSelector(
@@ -272,8 +254,7 @@ def _convert_percentages_to_fractions(
     probabilities = [
         CONF_P_GIVEN_T,
         CONF_P_GIVEN_F,
-        CONF_PRIOR,
-        CONF_PROBABILITY_THRESHOLD,
+        CONF_CLASSIFICATION_SCORE_THRESHOLD,
     ]
     return {
         key: (
@@ -292,8 +273,7 @@ def _convert_fractions_to_percentages(
     probabilities = [
         CONF_P_GIVEN_T,
         CONF_P_GIVEN_F,
-        CONF_PRIOR,
-        CONF_PROBABILITY_THRESHOLD,
+        CONF_CLASSIFICATION_SCORE_THRESHOLD,
     ]
     return {
         key: (
@@ -401,7 +381,7 @@ async def _get_description_placeholders(
 ) -> dict[str, str]:
     # Current step is None when were are about to start the first step
     if handler.parent_handler.cur_step is None:
-        return {"url": "https://www.home-assistant.io/integrations/bayesian/"}
+        return {"url": "https://www.home-assistant.io/integrations/learning/"}
     return {
         "parent_sensor_name": handler.options[CONF_NAME],
         "device_class_on": translation.async_translate_state(
@@ -522,11 +502,17 @@ class LearningSensorConfigFlowHandler(SchemaConfigFlowHandler, domain=DOMAIN):
         self.async_config_flow_finished(data)
         return super().async_create_entry(data=data, subentries=subentries, **kwargs)
 
-    def async_step_user(
+    async def async_step_user(
         self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
         """Handle the initial step."""
-        return super().async_step_user(user_input)
+
+        # Without these lines, scripts.hassfest will not run successfully.
+        if user_input is not None:
+            await self.async_set_unique_id(user_input.get(CONF_NAME))
+            self._abort_if_unique_id_configured()
+
+        return await super().async_step_user(user_input)
 
 
 class ObservationSubentryFlowHandler(ConfigSubentryFlow):
@@ -560,12 +546,6 @@ class ObservationSubentryFlowHandler(ConfigSubentryFlow):
                     user_input,
                     other_subentries=other_subentries,
                 )
-
-                # These lines are not valid, but without them scripts.hassfest
-                # will not run successfully.  Should be in SchemaConfigFlowHandler
-                # since it inherits from ConfigFlow.
-                await self.async_set_unique_id(user_input.get(CONF_NAME))
-                self._abort_if_unique_id_configured()
 
                 if reconfiguring:
                     return self.async_update_and_abort(
