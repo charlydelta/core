@@ -3,7 +3,7 @@
   "name": "Learning Sensor",
   "codeowners": ["@rhidus", "@charlydelta"],
   "config_flow": true,
-  "dependencies": ["sklearn"],
+  "dependencies": [],
   "documentation": "https://www.home-assistant.io/integrations/learning",
   "homekit": {},
   "integration_type": "helper",
