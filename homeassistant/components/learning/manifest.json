@@ -1,0 +1,15 @@
+{
+  "domain": "learning",
+  "name": "Learning Sensor",
+  "codeowners": ["@charlydelta"],
+  "config_flow": true,
+  "dependencies": [],
+  "documentation": "https://www.home-assistant.io/integrations/learning",
+  "homekit": {},
+  "integration_type": "helper",
+  "iot_class": "calculated",
+  "quality_scale": "bronze",
+  "requirements": [],
+  "ssdp": [],
+  "zeroconf": []
+}
