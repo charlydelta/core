@@ -482,7 +482,7 @@ class LearningSensorConfigFlowHandler(SchemaConfigFlowHandler, domain=DOMAIN):
     """Learning Sensor config flow."""
 
     VERSION = 1
-    # MINOR_VERSION = 1
+    MINOR_VERSION = 1
 
     config_flow = CONFIG_FLOW
     options_flow = OPTIONS_FLOW
@@ -602,9 +602,6 @@ class ObservationSubentryFlowHandler(ConfigSubentryFlow):
         self, user_input: dict[str, Any] | None = None
     ) -> SubentryFlowResult:
         """User flow to add a new observation."""
-
-        if user_input is not None and user_input == "0x00000":
-            self._abort_if_unique_id_configured()
 
         return self.async_show_menu(
             step_id="user",
