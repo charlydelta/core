@@ -353,6 +353,7 @@ FLOWS = {
         "lcn",
         "ld2410_ble",
         "leaone",
+        "learning",
         "led_ble",
         "lektrico",
         "letpot",

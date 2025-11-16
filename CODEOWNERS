@@ -868,6 +868,8 @@ build.json @home-assistant/supervisor
 /tests/components/ld2410_ble/ @930913
 /homeassistant/components/leaone/ @bdraco
 /tests/components/leaone/ @bdraco
+/homeassistant/components/learning/ @rhidus @charlydelta
+/tests/components/learning/ @rhidus @charlydelta
 /homeassistant/components/led_ble/ @bdraco
 /tests/components/led_ble/ @bdraco
 /homeassistant/components/lektrico/ @lektrico

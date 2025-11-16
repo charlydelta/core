@@ -3432,6 +3432,12 @@
       "config_flow": true,
       "iot_class": "local_push"
     },
+    "learning": {
+      "name": "Learning Sensor",
+      "integration_type": "service",
+      "config_flow": true,
+      "iot_class": "calculated"
+    },
     "led_ble": {
       "name": "LED BLE",
       "integration_type": "hub",

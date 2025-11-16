@@ -6,7 +6,7 @@
   "dependencies": [],
   "documentation": "https://www.home-assistant.io/integrations/learning",
   "homekit": {},
-  "integration_type": "helper",
+  "integration_type": "service",
   "iot_class": "calculated",
   "quality_scale": "bronze",
   "requirements": [],

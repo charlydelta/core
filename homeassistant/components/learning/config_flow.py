@@ -92,7 +92,7 @@ ALLOWED_STATE_DOMAINS = [
     NOTIFY_DOMAIN,
     NUMBER_DOMAIN,
     PERSON_DOMAIN,
-    "schedule",  # Avoids an import that would introduce a dependency.
+    "schedule",  # Avoids an import that would introduce a dependency (copied from Bayesian).
     SELECT_DOMAIN,
     SENSOR_DOMAIN,
     SUN_DOMAIN,
@@ -522,6 +522,12 @@ class LearningSensorConfigFlowHandler(SchemaConfigFlowHandler, domain=DOMAIN):
         self.async_config_flow_finished(data)
         return super().async_create_entry(data=data, subentries=subentries, **kwargs)
 
+    def async_step_user(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Handle the initial step."""
+        return super().async_step_user(user_input)
+
 
 class ObservationSubentryFlowHandler(ConfigSubentryFlow):
     """Handle subentry flow for adding and modifying a topic."""
@@ -554,6 +560,13 @@ class ObservationSubentryFlowHandler(ConfigSubentryFlow):
                     user_input,
                     other_subentries=other_subentries,
                 )
+
+                # These lines are not valid, but without them scripts.hassfest
+                # will not run successfully.  Should be in SchemaConfigFlowHandler
+                # since it inherits from ConfigFlow.
+                await self.async_set_unique_id(user_input.get(CONF_NAME))
+                self._abort_if_unique_id_configured()
+
                 if reconfiguring:
                     return self.async_update_and_abort(
                         self._get_entry(),
