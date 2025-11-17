@@ -13,9 +13,6 @@ CONF_OBSERVATIONS = "observations"
 CONF_TEMPLATE = "template"
 CONF_NUMERIC_STATE = "numeric_state"
 CONF_CLASSIFICATION_SCORE_THRESHOLD = "classification_score_threshold"
-CONF_P_GIVEN_F = "prob_given_false"
-CONF_P_GIVEN_T = "prob_given_true"
-CONF_TO_STATE = "to_state"
 
 DEFAULT_NAME = "Learning Binary Sensor"
 DEFAULT_CLASSIFICATION_SCORE_THRESHOLD = 0.5

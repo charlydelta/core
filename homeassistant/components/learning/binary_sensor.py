@@ -5,8 +5,7 @@ from __future__ import annotations
 from collections import OrderedDict
 from collections.abc import Callable
 import logging
-import math
-from typing import TYPE_CHECKING, Any, NamedTuple
+from typing import TYPE_CHECKING, Any
 from uuid import UUID
 
 import voluptuous as vol
@@ -18,8 +17,6 @@ from homeassistant.components.binary_sensor import (
 )
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (
-    CONF_ABOVE,
-    CONF_BELOW,
     CONF_DEVICE_CLASS,
     CONF_ENTITY_ID,
     CONF_NAME,
@@ -56,113 +53,31 @@ from .const import (
     CONF_CLASSIFICATION_SCORE_THRESHOLD,
     CONF_NUMERIC_STATE,
     CONF_OBSERVATIONS,
-    CONF_P_GIVEN_F,
-    CONF_P_GIVEN_T,
     CONF_TEMPLATE,
-    CONF_TO_STATE,
     DEFAULT_CLASSIFICATION_SCORE_THRESHOLD,
     DEFAULT_NAME,
     DOMAIN,
     PLATFORMS,
 )
 from .helpers import Observation
-from .issues import raise_mirrored_entries, raise_no_prob_given_false
+from .issues import raise_mirrored_entries
 
 _LOGGER = logging.getLogger(__name__)
 
 
-def above_greater_than_below(config: dict[str, Any]) -> dict[str, Any]:
-    """Validate above and below options.
-
-    If the observation is of type/platform NUMERIC_STATE, then ensure that the
-    value given for 'above' is not greater than that for 'below'. Also check
-    that at least one of the two is specified.
-    """
-    if config[CONF_PLATFORM] == CONF_NUMERIC_STATE:
-        above = config.get(CONF_ABOVE)
-        below = config.get(CONF_BELOW)
-        if above is None and below is None:
-            _LOGGER.error(
-                "For bayesian numeric state for entity: %s at least one of 'above' or 'below' must be specified",
-                config[CONF_ENTITY_ID],
-            )
-            raise vol.Invalid("above_or_below")
-        if above is not None and below is not None:
-            if above > below:
-                _LOGGER.error(
-                    "For bayesian numeric state 'above' (%s) must be less than 'below' (%s)",
-                    above,
-                    below,
-                )
-                raise vol.Invalid("above_below")
-    return config
-
-
-NUMERIC_STATE_SCHEMA = vol.All(
-    vol.Schema(
-        {
-            CONF_PLATFORM: CONF_NUMERIC_STATE,
-            vol.Required(CONF_ENTITY_ID): cv.entity_id,
-            vol.Optional(CONF_ABOVE): vol.Coerce(float),
-            vol.Optional(CONF_BELOW): vol.Coerce(float),
-            vol.Required(CONF_P_GIVEN_T): vol.Coerce(float),
-            vol.Optional(CONF_P_GIVEN_F): vol.Coerce(float),
-        },
-        required=True,
-    ),
-    above_greater_than_below,
+NUMERIC_STATE_SCHEMA = vol.Schema(
+    {
+        CONF_PLATFORM: CONF_NUMERIC_STATE,
+        vol.Required(CONF_ENTITY_ID): cv.entity_id,
+    },
+    required=True,
 )
-
-
-def no_overlapping(configs: list[dict]) -> list[dict]:
-    """Validate that intervals are not overlapping.
-
-    For a list of observations ensure that there are no overlapping intervals
-    for NUMERIC_STATE observations for the same entity.
-    """
-    numeric_configs = [
-        config for config in configs if config[CONF_PLATFORM] == CONF_NUMERIC_STATE
-    ]
-    if len(numeric_configs) < 2:
-        return configs
-
-    class NumericConfig(NamedTuple):
-        above: float
-        below: float
-
-    d: dict[str, list[NumericConfig]] = {}
-    for _, config in enumerate(numeric_configs):
-        above = config.get(CONF_ABOVE, -math.inf)
-        below = config.get(CONF_BELOW, math.inf)
-        entity_id: str = str(config[CONF_ENTITY_ID])
-        d.setdefault(entity_id, []).append(NumericConfig(above, below))
-
-    for ent_id, intervals in d.items():
-        intervals = sorted(intervals, key=lambda tup: tup.above)
-
-        for i, tup in enumerate(intervals):
-            if len(intervals) > i + 1 and tup.below > intervals[i + 1].above:
-                _LOGGER.error(
-                    "Ranges for bayesian numeric state entities must not overlap, but %s has overlapping ranges, above:%s, below:%s overlaps with above:%s, below:%s",
-                    ent_id,
-                    tup.above,
-                    tup.below,
-                    intervals[i + 1].above,
-                    intervals[i + 1].below,
-                )
-                raise vol.Invalid(
-                    "overlapping_ranges",
-                )
-    return configs
 
 
 STATE_SCHEMA = vol.Schema(
     {
         CONF_PLATFORM: CONF_STATE,
         vol.Required(CONF_ENTITY_ID): cv.entity_id,
-        vol.Required(CONF_TO_STATE): cv.string,
-        vol.Required(CONF_P_GIVEN_T): vol.Coerce(float),
-        vol.Optional(CONF_P_GIVEN_F): vol.Coerce(float),
     },
     required=True,
 )
@@ -171,8 +86,6 @@ TEMPLATE_SCHEMA = vol.Schema(
     {
         CONF_PLATFORM: CONF_TEMPLATE,
         vol.Required(CONF_VALUE_TEMPLATE): cv.template,
-        vol.Required(CONF_P_GIVEN_T): vol.Coerce(float),
-        vol.Optional(CONF_P_GIVEN_F): vol.Coerce(float),
     },
     required=True,
 )
@@ -186,7 +99,6 @@ PLATFORM_SCHEMA = BINARY_SENSOR_PLATFORM_SCHEMA.extend(
             vol.All(
                 cv.ensure_list,
                 [vol.Any(TEMPLATE_SCHEMA, STATE_SCHEMA, NUMERIC_STATE_SCHEMA)],
-                no_overlapping,
             )
         ),
         vol.Optional(
@@ -195,15 +107,6 @@ PLATFORM_SCHEMA = BINARY_SENSOR_PLATFORM_SCHEMA.extend(
         ): vol.Coerce(float),
     }
 )
-
-
-def update_probability(
-    prior: float, prob_given_true: float, prob_given_false: float
-) -> float:
-    """Update probability using Bayes' rule."""
-    numerator = prob_given_true * prior
-    denominator = numerator + prob_given_false * (1 - prior)
-    return numerator / denominator
 
 
 async def async_setup_platform(
@@ -227,15 +130,15 @@ async def async_setup_platform(
 
     # Should deprecate in some future version (2022.10 at time of writing) & make prob_given_false required in schemas.
     broken_observations: list[dict[str, Any]] = []
-    for observation in observations:
-        if CONF_P_GIVEN_F not in observation:
-            text = (
-                f"{name}/{observation.get(CONF_ENTITY_ID, '')}"
-                f"{observation.get(CONF_VALUE_TEMPLATE, '')}"
-            )
-            raise_no_prob_given_false(hass, text)
-            _LOGGER.error("Missing prob_given_false YAML entry for %s", text)
-            broken_observations.append(observation)
+    # for observation in observations:
+    #    if CONF_P_GIVEN_F not in observation:
+    #        text = (
+    #            f"{name}/{observation.get(CONF_ENTITY_ID, '')}"
+    #            f"{observation.get(CONF_VALUE_TEMPLATE, '')}"
+    #        )
+    #        raise_no_prob_given_false(hass, text)
+    #        _LOGGER.error("Missing prob_given_false YAML entry for %s", text)
+    #        broken_observations.append(observation)
     observations = [x for x in observations if x not in broken_observations]
 
     async_add_entities(
@@ -312,12 +215,7 @@ class LearningBinarySensor(BinarySensorEntity):
             Observation(
                 entity_id=observation.get(CONF_ENTITY_ID),
                 platform=observation[CONF_PLATFORM],
-                prob_given_false=observation[CONF_P_GIVEN_F],
-                prob_given_true=observation[CONF_P_GIVEN_T],
                 observed=None,
-                to_state=observation.get(CONF_TO_STATE),
-                above=observation.get(CONF_ABOVE),
-                below=observation.get(CONF_BELOW),
                 value_template=observation.get(CONF_VALUE_TEMPLATE),
             )
             for observation in observations
@@ -482,18 +380,18 @@ class LearningBinarySensor(BinarySensorEntity):
 
         for observation in self.current_observations.values():
             if observation.observed is True:
-                prior = update_probability(
-                    prior,
-                    observation.prob_given_true,
-                    observation.prob_given_false,
-                )
+                # prior = update_probability(
+                #    prior,
+                #    observation.prob_given_true,
+                #    observation.prob_given_false,
+                # )
                 continue
             if observation.observed is False:
-                prior = update_probability(
-                    prior,
-                    1 - observation.prob_given_true,
-                    1 - observation.prob_given_false,
-                )
+                # prior = update_probability(
+                #    prior,
+                #    1 - observation.prob_given_true,
+                #    1 - observation.prob_given_false,
+                # )
                 continue
             # Entity exists but observation.observed is None
             if observation.entity_id is not None:
@@ -581,24 +479,24 @@ class LearningBinarySensor(BinarySensorEntity):
         try:
             if condition.state(self.hass, entity, [STATE_UNKNOWN, STATE_UNAVAILABLE]):
                 return None
-            result = condition.async_numeric_state(
-                self.hass,
-                entity,
-                entity_observation.below,
-                entity_observation.above,
-                None,
-                entity_observation.to_dict(),
-            )
+            result = True
+            # condition.async_numeric_state(
+            #    self.hass,
+            #    entity,
+            #    entity_observation.below,
+            #    entity_observation.above,
+            #    None,
+            #    entity_observation.to_dict(),
+            # )
             if result:
                 return True
             if multi:
-                state = float(entity.state)
-                if (
-                    entity_observation.below is not None
-                    and state == entity_observation.below
-                ):
-                    return True
-                return None
+                # state = float(entity.state)
+                # if (
+                #    entity_observation.below is not None
+                #    and state == entity_observation.below
+                # ):
+                return True
         except ConditionError:
             return None
         else:
@@ -618,7 +516,8 @@ class LearningBinarySensor(BinarySensorEntity):
             if condition.state(self.hass, entity, [STATE_UNKNOWN, STATE_UNAVAILABLE]):
                 return None
 
-            result = condition.state(self.hass, entity, entity_observation.to_state)
+            # result = condition.state(self.hass, entity, entity_observation.to_state)
+            result = True
             if multi and not result:
                 return None
         except ConditionError:

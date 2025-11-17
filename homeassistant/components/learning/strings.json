@@ -2,7 +2,6 @@
   "config": {
     "error": {
       "above_below": "Invalid range: 'Above' must be less than 'Below' when both are set.",
-      "above_or_below": "Invalid range: At least one of 'Above' or 'Below' must be set.",
       "equal_probabilities": "If 'Probability given true' and 'Probability given false' are equal, this observation can have no effect, and is therefore redundant",
       "extreme_prior_error": "'Prior' set to 0% means that it is impossible for the sensor to show 'on' and 100% means it will never show 'off', use a close number like 0.1% or 99.9% instead",
       "extreme_prob_given_error": "If either 'Probability given false' or 'Probability given true' is 0 or 100 this will create certainties that override all other observations, use numbers close to 0 or 100 instead",
@@ -12,20 +11,12 @@
     "step": {
       "numeric_state": {
         "data": {
-          "above": "[%key:component::learning::config_subentries::observation::step::numeric_state::data::above%]",
-          "below": "[%key:component::learning::config_subentries::observation::step::numeric_state::data::below%]",
           "entity_id": "[%key:component::learning::config_subentries::observation::step::state::data::entity_id%]",
-          "name": "[%key:common::config_flow::data::name%]",
-          "prob_given_false": "[%key:component::learning::config_subentries::observation::step::state::data::prob_given_false%]",
-          "prob_given_true": "[%key:component::learning::config_subentries::observation::step::state::data::prob_given_true%]"
+          "name": "[%key:common::config_flow::data::name%]"
         },
         "data_description": {
-          "above": "[%key:component::learning::config_subentries::observation::step::numeric_state::data_description::above%]",
-          "below": "[%key:component::learning::config_subentries::observation::step::numeric_state::data_description::below%]",
           "entity_id": "[%key:component::learning::config_subentries::observation::step::state::data_description::entity_id%]",
-          "name": "[%key:component::learning::config_subentries::observation::step::state::data_description::name%]",
-          "prob_given_false": "[%key:component::learning::config_subentries::observation::step::state::data_description::prob_given_false%]",
-          "prob_given_true": "[%key:component::learning::config_subentries::observation::step::state::data_description::prob_given_true%]"
+          "name": "[%key:component::learning::config_subentries::observation::step::state::data_description::name%]"
         },
         "description": "[%key:component::learning::config_subentries::observation::step::numeric_state::description%]",
         "title": "[%key:component::learning::config_subentries::observation::step::state::title%]"
@@ -43,17 +34,11 @@
       "state": {
         "data": {
           "entity_id": "[%key:component::learning::config_subentries::observation::step::state::data::entity_id%]",
-          "name": "[%key:common::config_flow::data::name%]",
-          "prob_given_false": "[%key:component::learning::config_subentries::observation::step::state::data::prob_given_false%]",
-          "prob_given_true": "[%key:component::learning::config_subentries::observation::step::state::data::prob_given_true%]",
-          "to_state": "[%key:component::learning::config_subentries::observation::step::state::data::to_state%]"
+          "name": "[%key:common::config_flow::data::name%]"
         },
         "data_description": {
           "entity_id": "[%key:component::learning::config_subentries::observation::step::state::data_description::entity_id%]",
-          "name": "[%key:component::learning::config_subentries::observation::step::state::data_description::name%]",
-          "prob_given_false": "[%key:component::learning::config_subentries::observation::step::state::data_description::prob_given_false%]",
-          "prob_given_true": "[%key:component::learning::config_subentries::observation::step::state::data_description::prob_given_true%]",
-          "to_state": "[%key:component::learning::config_subentries::observation::step::state::data_description::to_state%]"
+          "name": "[%key:component::learning::config_subentries::observation::step::state::data_description::name%]"
         },
         "description": "[%key:component::learning::config_subentries::observation::step::state::description%]",
 
@@ -62,14 +47,10 @@
       "template": {
         "data": {
           "name": "[%key:common::config_flow::data::name%]",
-          "prob_given_false": "[%key:component::learning::config_subentries::observation::step::state::data::prob_given_false%]",
-          "prob_given_true": "[%key:component::learning::config_subentries::observation::step::state::data::prob_given_true%]",
           "value_template": "[%key:component::learning::config_subentries::observation::step::template::data::value_template%]"
         },
         "data_description": {
           "name": "[%key:component::learning::config_subentries::observation::step::state::data_description::name%]",
-          "prob_given_false": "[%key:component::learning::config_subentries::observation::step::state::data_description::prob_given_false%]",
-          "prob_given_true": "[%key:component::learning::config_subentries::observation::step::state::data_description::prob_given_true%]",
           "value_template": "[%key:component::learning::config_subentries::observation::step::template::data_description::value_template%]"
         },
         "description": "[%key:component::learning::config_subentries::observation::step::template::description%]",
@@ -98,7 +79,6 @@
       "entry_type": "Observation",
       "error": {
         "above_below": "[%key:component::learning::config::error::above_below%]",
-        "above_or_below": "[%key:component::learning::config::error::above_or_below%]",
         "equal_probabilities": "[%key:component::learning::config::error::equal_probabilities%]",
         "extreme_prob_given_error": "[%key:component::learning::config::error::extreme_prob_given_error%]",
         "overlapping_ranges": "[%key:component::learning::config::error::overlapping_ranges%]"
@@ -109,43 +89,25 @@
       "step": {
         "numeric_state": {
           "data": {
-            "above": "Above",
-            "below": "Below",
             "entity_id": "[%key:component::learning::config_subentries::observation::step::state::data::entity_id%]",
-            "name": "[%key:common::config_flow::data::name%]",
-            "prob_given_false": "[%key:component::learning::config_subentries::observation::step::state::data::prob_given_false%]",
-            "prob_given_true": "[%key:component::learning::config_subentries::observation::step::state::data::prob_given_true%]"
+            "name": "[%key:common::config_flow::data::name%]"
           },
           "data_description": {
-            "above": "Optional - the lower end of the numeric range. Values exactly matching this will not count",
-            "below": "Optional - the upper end of the numeric range. Values exactly matching this will only count if more than one range is configured for the same entity.",
             "entity_id": "[%key:component::learning::config_subentries::observation::step::state::data_description::entity_id%]",
-            "name": "[%key:component::learning::config_subentries::observation::step::state::data_description::name%]",
-            "prob_given_false": "[%key:component::learning::config_subentries::observation::step::state::data_description::prob_given_false%]",
-            "prob_given_true": "[%key:component::learning::config_subentries::observation::step::state::data_description::prob_given_true%]"
+            "name": "[%key:component::learning::config_subentries::observation::step::state::data_description::name%]"
           },
           "description": "Add an observation which evaluates to `True` when a numeric sensor is within a chosen range.",
           "title": "[%key:component::learning::config_subentries::observation::step::state::title%]"
         },
         "reconfigure": {
           "data": {
-            "above": "[%key:component::learning::config_subentries::observation::step::numeric_state::data::above%]",
-            "below": "[%key:component::learning::config_subentries::observation::step::numeric_state::data::below%]",
             "entity_id": "[%key:component::learning::config_subentries::observation::step::state::data::entity_id%]",
             "name": "[%key:common::config_flow::data::name%]",
-            "prob_given_false": "[%key:component::learning::config_subentries::observation::step::state::data::prob_given_false%]",
-            "prob_given_true": "[%key:component::learning::config_subentries::observation::step::state::data::prob_given_true%]",
-            "to_state": "[%key:component::learning::config_subentries::observation::step::state::data::to_state%]",
             "value_template": "[%key:component::learning::config_subentries::observation::step::template::data::value_template%]"
           },
           "data_description": {
-            "above": "[%key:component::learning::config_subentries::observation::step::numeric_state::data_description::above%]",
-            "below": "[%key:component::learning::config_subentries::observation::step::numeric_state::data_description::below%]",
             "entity_id": "[%key:component::learning::config_subentries::observation::step::state::data_description::entity_id%]",
             "name": "[%key:component::learning::config_subentries::observation::step::state::data_description::name%]",
-            "prob_given_false": "[%key:component::learning::config_subentries::observation::step::state::data_description::prob_given_false%]",
-            "prob_given_true": "[%key:component::learning::config_subentries::observation::step::state::data_description::prob_given_true%]",
-            "to_state": "[%key:component::learning::config_subentries::observation::step::state::data_description::to_state%]",
             "value_template": "[%key:component::learning::config_subentries::observation::step::template::data_description::value_template%]"
           },
           "description": "[%key:component::learning::config_subentries::observation::step::state::description%]",
@@ -154,44 +116,34 @@
         "state": {
           "data": {
             "entity_id": "Entity",
-            "name": "[%key:common::config_flow::data::name%]",
-            "prob_given_false": "Probability when {parent_sensor_name} is {device_class_off}",
-            "prob_given_true": "Probability when {parent_sensor_name} is {device_class_on}",
-            "to_state": "To state"
+            "name": "[%key:common::config_flow::data::name%]"
           },
           "data_description": {
-            "entity_id": "An entity that is correlated with `{parent_sensor_name}`.",
-            "name": "This name will be used for to identify this observation for editing in the future.",
-            "prob_given_false": "The estimated probability or proportion of time this observation is `True` while `{parent_sensor_name}` is, or should be, `{device_class_off}`.",
-            "prob_given_true": "The estimated probability or proportion of time this observation is `True` while `{parent_sensor_name}` is, or should be, `{device_class_on}`.",
-            "to_state": "The state of the sensor for which the observation will be considered `True`."
+            "entity_id": "An entity that is correlated with the desired sensor value of `{parent_sensor_name}`.",
+            "name": "This name will be used for to identify this observation for editing in the future."
           },
-          "description": "Add an observation which evaluates to `True` when the value of the sensor exactly matches *'To state'*. When `False`, it will update the prior with probabilities that are the inverse of those set below. This behavior can be overridden by adding observations for the same entity's other states.",
+          "description": "Add an observation that is correlated with the desired sensor value based on the state of a binary or symbolic sensor.  If in doubt, still add the sensor as observation and let the learning model figure out whether it is useful or not.",
 
           "title": "Add a learning sensor"
         },
         "template": {
           "data": {
             "name": "[%key:common::config_flow::data::name%]",
-            "prob_given_false": "[%key:component::learning::config_subentries::observation::step::state::data::prob_given_false%]",
-            "prob_given_true": "[%key:component::learning::config_subentries::observation::step::state::data::prob_given_true%]",
             "value_template": "Template"
           },
           "data_description": {
             "name": "[%key:component::learning::config_subentries::observation::step::state::data_description::name%]",
-            "prob_given_false": "[%key:component::learning::config_subentries::observation::step::state::data_description::prob_given_false%]",
-            "prob_given_true": "[%key:component::learning::config_subentries::observation::step::state::data_description::prob_given_true%]",
             "value_template": "A template that evaluates to `True` will update the prior accordingly, A template that returns `False` or `None` will update the prior with inverse probabilities. A template that returns an error will not update probabilities. Results are coerced into being `True` or `False`"
           },
           "description": "Add a custom observation which evaluates whether a template is observed (`True`) or not (`False`).",
           "title": "[%key:component::learning::config_subentries::observation::step::state::title%]"
         },
         "user": {
-          "description": "'Observations' are the sensor or template values that are monitored and then combined in order to inform the Bayesian sensor's final probability. Each observation will update the probability of the Bayesian sensor if it is detected, or if it is not detected. If the state of the entity becomes `unavailable` or `unknown` it will be ignored. If more than one state or more than one numeric range is configured for the same entity then inverse detections will be ignored.",
+          "description": "*Observations* are the sensor or template values that form the input to the learning model. All observations are given to the learning model which then predicts the user's desired output based on user-provided examples.",
           "menu_options": {
-            "numeric_state": "Add an observation for a numeric range",
-            "state": "Add an observation for a sensor's state",
-            "template": "Add an observation for a template"
+            "numeric_state": "Add an observation from a sensor's numeric state",
+            "state": "Add an observation from a sensor's symbolic state",
+            "template": "Add an observation from a template"
           },
           "title": "Add an observation"
         }

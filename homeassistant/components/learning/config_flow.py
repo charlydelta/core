@@ -41,8 +41,6 @@ from homeassistant.config_entries import (
     SubentryFlowResult,
 )
 from homeassistant.const import (
-    CONF_ABOVE,
-    CONF_BELOW,
     CONF_DEVICE_CLASS,
     CONF_ENTITY_ID,
     CONF_NAME,
@@ -60,14 +58,10 @@ from homeassistant.helpers.schema_config_entry_flow import (
     SchemaFlowMenuStep,
 )
 
-from .binary_sensor import above_greater_than_below, no_overlapping
 from .const import (
     CONF_CLASSIFICATION_SCORE_THRESHOLD,
     CONF_OBSERVATIONS,
-    CONF_P_GIVEN_F,
-    CONF_P_GIVEN_T,
     CONF_TEMPLATE,
-    CONF_TO_STATE,
     DEFAULT_CLASSIFICATION_SCORE_THRESHOLD,
     DEFAULT_NAME,
     DOMAIN,
@@ -166,42 +160,6 @@ CONFIG_SCHEMA = vol.Schema(
 
 OBSERVATION_BOILERPLATE = vol.Schema(
     {
-        vol.Required(CONF_P_GIVEN_T): vol.All(
-            selector.NumberSelector(
-                selector.NumberSelectorConfig(
-                    mode=selector.NumberSelectorMode.SLIDER,
-                    step=1.0,
-                    min=0,
-                    max=100,
-                    unit_of_measurement="%",
-                ),
-            ),
-            vol.Range(
-                min=0,
-                max=100,
-                min_included=False,
-                max_included=False,
-                msg="extreme_prob_given_error",
-            ),
-        ),
-        vol.Required(CONF_P_GIVEN_F): vol.All(
-            selector.NumberSelector(
-                selector.NumberSelectorConfig(
-                    mode=selector.NumberSelectorMode.SLIDER,
-                    step=1.0,
-                    min=0,
-                    max=100,
-                    unit_of_measurement="%",
-                ),
-            ),
-            vol.Range(
-                min=0,
-                max=100,
-                min_included=False,
-                max_included=False,
-                msg="extreme_prob_given_error",
-            ),
-        ),
         vol.Required(CONF_NAME): selector.TextSelector(),
     }
 )
@@ -211,11 +169,6 @@ STATE_SUBSCHEMA = vol.Schema(
         vol.Required(CONF_ENTITY_ID): selector.EntitySelector(
             selector.EntitySelectorConfig(domain=ALLOWED_STATE_DOMAINS)
         ),
-        vol.Required(CONF_TO_STATE): selector.TextSelector(
-            selector.TextSelectorConfig(
-                multiline=False, type=selector.TextSelectorType.TEXT, multiple=False
-            )  # ideally this would be a state selector context-linked to the above entity.
-        ),
     },
 ).extend(OBSERVATION_BOILERPLATE.schema)
 
@@ -223,16 +176,6 @@ NUMERIC_STATE_SUBSCHEMA = vol.Schema(
     {
         vol.Required(CONF_ENTITY_ID): selector.EntitySelector(
             selector.EntitySelectorConfig(domain=ALLOWED_NUMERIC_DOMAINS)
-        ),
-        vol.Optional(CONF_ABOVE): selector.NumberSelector(
-            selector.NumberSelectorConfig(
-                mode=selector.NumberSelectorMode.BOX, step="any"
-            ),
-        ),
-        vol.Optional(CONF_BELOW): selector.NumberSelector(
-            selector.NumberSelectorConfig(
-                mode=selector.NumberSelectorMode.BOX, step="any"
-            ),
         ),
     },
 ).extend(OBSERVATION_BOILERPLATE.schema)
@@ -252,8 +195,6 @@ def _convert_percentages_to_fractions(
 ) -> dict[str, str | float]:
     """Convert percentage probability values in a dictionary to fractions for storing in the config entry."""
     probabilities = [
-        CONF_P_GIVEN_T,
-        CONF_P_GIVEN_F,
         CONF_CLASSIFICATION_SCORE_THRESHOLD,
     ]
     return {
@@ -271,8 +212,6 @@ def _convert_fractions_to_percentages(
 ) -> dict[str, str | float]:
     """Convert fraction probability values in a dictionary to percentages for loading into the UI."""
     probabilities = [
-        CONF_P_GIVEN_T,
-        CONF_P_GIVEN_F,
         CONF_CLASSIFICATION_SCORE_THRESHOLD,
     ]
     return {
@@ -328,8 +267,8 @@ def _validate_observation_subentry(
 ) -> dict[str, Any]:
     """Validate an observation input and manually update options with observations as they are nested items."""
 
-    if user_input[CONF_P_GIVEN_T] == user_input[CONF_P_GIVEN_F]:
-        raise SchemaFlowError("equal_probabilities")
+    # if user_input[CONF_P_GIVEN_T] == user_input[CONF_P_GIVEN_F]:
+    #    raise SchemaFlowError("equal_probabilities")
     user_input = _convert_percentages_to_fractions(user_input)
 
     # Save the observation type in the user input as it is needed in binary_sensor.py
@@ -344,8 +283,9 @@ def _validate_observation_subentry(
             "Comparing with other subentries: %s", [*other_subentries, user_input]
         )
         try:
-            above_greater_than_below(user_input)
-            no_overlapping([*other_subentries, user_input])
+            pass
+            # above_greater_than_below(user_input)
+            # no_overlapping([*other_subentries, user_input])
         except vol.Invalid as err:
             raise SchemaFlowError(err) from err
 
